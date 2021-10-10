@@ -247,3 +247,87 @@ ghci> read "[1,2,3,4]" :: [Int]
 ghci> read "(3, 'a')" :: (Int, Char)  
 (3, 'a') 
 ```
+
+### 函数
+在 Haskell 中可为函数指定 Type 和 Typeclass
+而函数定义时，可以检查参数是否符合某种形式，并映射到不同的结果上。
+``` haskell
+-- 定义 tell 可以根据数组有0、1、2个元素时特化其输出
+tell :: (Show a) => [a] -> String  
+tell [] = "The list is empty"  
+tell (x:[]) = "The list has one element: " ++ show x  
+tell (x:y:[]) = "The list has two elements: " ++ show x ++ " and " ++ show y  
+tell (x:y:_) = "This list is long. The first two elements are: " ++ show x ++ " and " ++ show y  
+
+-- 递归地算出数组的长度
+length' :: (Num b) => [a] -> b  
+length' [] = 0  
+length' (_:xs) = 1 + length' xs  
+
+-- all@(x:xs) 中 @前的all表示完整的数组，x匹配到数组的第一个元素，xs为剩下的元素
+capital :: String -> String  
+capital "" = "Empty string, whoops!"  
+capital all@(x:xs) = "The first letter of " ++ all ++ " is " ++ [x]  
+
+ghci> capital "Dracula"  
+"The first letter of Dracula is D" 
+```
+#### Guards & Case
+Guards 类似 if 语句，但有更高的可读性。Guards感觉就是门卫，变量通过函数进入后，根据门卫指示去向不同的地方。。
+``` haskell
+-- otherwise 用于指代没有匹配到的其他条件
+max' :: (Ord a) => a -> a -> a  
+max' a b   
+    | a > b     = a  
+    | otherwise = b
+
+bmiTell :: (RealFloat a) => a -> a -> String  
+bmiTell weight height  
+    | bmi <= skinny = "You're underweight, you emo, you!"  
+    | bmi <= normal = "You're supposedly normal. Pffft, I bet you're ugly!"  
+    | bmi <= fat    = "You're fat! Lose some weight, fatty!"  
+    | otherwise     = "You're a whale, congratulations!"  
+    where bmi = weight / height ^ 2  
+          (skinny, normal, fat) = (18.5, 25.0, 30.0)    
+```
+Haskell 中也有 `case`，语法如下所示：
+``` haskell
+case expression of pattern -> result  
+                   pattern -> result  
+                   pattern -> result  
+                   ...  
+
+head' :: [a] -> a  
+head' xs = case xs of [] -> error "No head for empty lists!"  
+                      (x:_) -> x  
+
+describeList :: [a] -> String  
+describeList xs = "The list is " ++ case xs of [] -> "empty."  
+                                               [x] -> "a singleton list."   
+                                               xs -> "a longer list."  
+```
+
+#### 变量定义
+在 Haskell 中变量定义称作 `bindings`，如上文提过可以用`:show bindings`查询ghci上下文的所有变量
+在函数中，可以用`where`和`let`分别在**后**和**前**定义变量。
+
+。。。好像缩进很重要，像 Python
+``` haskell
+-- where 是函数的一种语法构造，不能独立存在
+initials :: String -> String -> String  
+initials firstname lastname = [f] ++ ". " ++ [l] ++ "."  
+    where (f:_) = firstname  
+          (l:_) = lastname    
+
+
+-- let <bindings> in <expression> 这种表达式中，最后执行返回的是<expression>的结果
+cylinder :: (RealFloat a) => a -> a -> a  
+cylinder r h = 
+    let sideArea = 2 * pi * r * h  
+        topArea = pi * r ^2  
+    in  sideArea + 2 * topArea  
+
+-- let .. in .. 的结构本身就是表达式，可以独立存在
+ghci> [let square x = x * x in (square 5, square 3, square 2)]  
+[(25,9,4)]  
+```
