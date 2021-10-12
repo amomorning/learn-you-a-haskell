@@ -331,3 +331,287 @@ cylinder r h =
 ghci> [let square x = x * x in (square 5, square 3, square 2)]  
 [(25,9,4)]  
 ```
+#### 高阶函数
+前面对函数类型的定义中，对多个参数的处理使用了箭头指向的方式，这意味着可以逐步传入参数，来实现函数的功能（柯里化）。  
+比如`fun:: (Ord a) => a -> a -> a -> a` 传入三个参数，但可以`fun:: (Ord a) => a -> (a -> (a -> a))`，拆分出来的每个局部本身也是一个函数。`fun x y` 为需要传入一个变量的函数。
+``` haskell
+-- 定义一个除以10函数，divideByTen 100 意味着 100/10
+divideByTen :: (Floating a) => a -> a  
+divideByTen = (/10)  
+
+-- 是否为大写字母
+isUpperAlphanum :: Char -> Bool  
+isUpperAlphanum = (`elem` ['A'..'Z'])  
+
+applyTwice :: (a -> a) -> a -> a  
+applyTwice f x = f (f x)  
+
+ghci> applyTwice (+3) 10  
+16   
+-- ("HAHA " ++) 是一个函数
+ghci> applyTwice ("HAHA " ++) "HEY"  
+"HAHA HAHA HEY" 
+ghci> applyTwice (3:) [1]  
+[3,3,1]  
+```
+#### Map & Filter
+``` haskell
+-- map :: (a -> b) -> [a] -> [b]   
+ghci> map (+3) [1,5,3,1,6]  
+[4,8,6,4,9]  
+
+ghci> map fst [(1,2),(3,5),(6,3),(2,6),(2,5)]  
+[1,3,6,2,2]  
+
+-- 定义函数数组[(0*),(1*),(2*),(3*),(4*),(5*)..
+ghci> let listOfFuns = map (*) [0..]  
+ghci> (listOfFuns !! 4) 5  
+20  
+
+-- filter :: (a -> Bool) -> [a] -> [a]
+ghci> filter (>3) [1,5,3,2,1,6,4,3,2,1]  
+[5,6,4]  
+
+ghci> filter (`elem` ['a'..'z']) "u LaUgH aT mE BeCaUsE I aM diFfeRent"  
+"uagameasadifeent"  
+
+```
+#### Lambda 表达式
+用`\`开始一个匿名表达式，因为`\`看起来很像 lambda 的 l（如果你斜着看的话
+``` haskell
+ghci> map (\(a,b) -> a + b) [(1,2),(3,5),(6,3),(2,6),(2,5)]  
+[3,8,9,8,7]  
+```
+
+#### foldl & foldr
+``` haskell
+-- foldl 提供非显式的递归，从左往右，step by step
+-- foldl <function> <start value>
+sum' :: (Num a) => [a] -> a  
+sum' = foldl (+) 0  
+
+-- foldl1 和 foldr1 无需提供起始值
+head' :: [a] -> a  
+head' = foldr1 (\x _ -> x)  
+  
+last' :: [a] -> a  
+last' = foldl1 (\_ x -> x)  
+
+-- scanl 和 scanr 则可以直接给出fold作用后的结果
+ghci> scanl (+) 0 [3,5,2,1]  
+[0,3,8,10,11]  
+ghci> scanr (+) 0 [3,5,2,1]  
+[11,8,3,1,0]  
+```
+#### 函数前缀（`$`）、复合函数（`.`）
+``` haskell
+-- $ 用作函数前缀，右结合，具有最低优先级，一定在最后被执行
+ghci> sum $ map sqrt [1..5]
+8.382332347441762
+
+-- 除此之外，借助 $ 我们可以将函数数组作用在值上
+ghci> map ($ 3) [(4+), (10*), (^2), sqrt]  
+[7.0,30.0,9.0,1.7320508075688772]  
+
+-- . 用作复合函数，其定义如下
+(.) :: (b -> c) -> (a -> b) -> a -> c  
+f . g = \x -> f (g x) 
+
+ghci> map (negate . abs) [5,-3,-6,7,-3,2,-19,24]  
+[-5,-3,-6,-7,-3,-2,-19,-24]  
+
+ghci> map (negate . sum . tail) [[1..5],[3..6],[1..7]]  
+[-14,-15,-27]  
+
+fn x = ceiling (negate (tan (cos (max 50 x))))  
+-- 可写作
+fn = ceiling . negate . tan . cos . max 50  
+```
+
+### Data.List
+``` haskell
+-- intersperse
+ghci> intersperse '.' "MONKEY"  
+"M.O.N.K.E.Y"  
+ghci> intersperse 0 [1,2,3,4,5,6]  
+[1,0,2,0,3,0,4,0,5,0,6]  
+
+-- intercalate
+ghci> intercalate " " ["hey","there","guys"]  
+"hey there guys"  
+ghci> intercalate [0,0,0] [[1,2,3],[4,5,6],[7,8,9]]  
+[1,2,3,0,0,0,4,5,6,0,0,0,7,8,9]  
+
+-- transpose
+ghci> transpose [[1,2,3],[4,5,6],[7,8,9]]  
+[[1,4,7],[2,5,8],[3,6,9]]  
+ghci> transpose ["hey","there","guys"]  
+["htg","ehu","yey","rs","e"]  
+
+-- concat
+ghci> concat ["foo","bar","car"]  
+"foobarcar"  
+ghci> concat [[3,4,5],[2,3,4],[2,1,1]]  
+[3,4,5,2,3,4,2,1,1]  
+
+-- concatMap
+ghci> concatMap (replicate 4) [1..3]  
+[1,1,1,1,2,2,2,2,3,3,3,3]  
+
+-- and 作用于布尔数组
+ghci> and $ map (>4) [5,6,7,8]  
+True  
+ghci> and $ map (==4) [4,4,4,3,4]  
+False  
+
+-- or
+ghci> or $ map (==4) [2,3,4,5,6,1]  
+True  
+ghci> or $ map (>4) [1,2,3]  
+False  
+
+-- any / all
+ghci> any (==4) [2,3,5,6,1,4]  
+True  
+ghci> all (>4) [6,9,10]  
+True  
+ghci> all (`elem` ['A'..'Z']) "HEYGUYSwhatsup"  
+False  
+ghci> any (`elem` ['A'..'Z']) "HEYGUYSwhatsup"  
+True  
+
+-- iterate
+ghci> take 10 $ iterate (*2) 1  
+[1,2,4,8,16,32,64,128,256,512]  
+ghci> take 3 $ iterate (++ "haha") "haha"  
+["haha","hahahaha","hahahahahaha"] 
+
+-- splitAt return tuple
+ghci> splitAt 3 "heyman"  
+("hey","man")  
+ghci> splitAt 100 "heyman"  
+("heyman","")  
+ghci> splitAt (-3) "heyman"  
+("","heyman")  
+ghci> let (a,b) = splitAt 3 "foobar" in b ++ a  
+"barfoo"  
+
+-- takeWhile
+ghci> takeWhile (>3) [6,5,4,3,2,1,2,3,4,5,4,3,2,1]  
+[6,5,4]  
+ghci> takeWhile (/=' ') "This is a sentence"  
+"This"  
+
+-- dropWhile
+ghci> dropWhile (/=' ') "This is a sentence"  
+" is a sentence"  
+ghci> dropWhile (<3) [1,2,2,2,3,4,5,4,3,2,1]  
+[3,4,5,4,3,2,1]  
+
+-- span / break
+ghci> break (==4) [1,2,3,4,5,6,7]  
+([1,2,3],[4,5,6,7])  
+ghci> span (/=4) [1,2,3,4,5,6,7]  
+([1,2,3],[4,5,6,7])  
+
+-- sort
+ghci> sort [8,5,3,2,1,6,4,2]  
+[1,2,2,3,4,5,6,8]  
+ghci> sort "This will be sorted soon"  
+"    Tbdeehiillnooorssstw" 
+
+-- nub 可 By
+ghci> nub [1,2,3,4,3,2,1,2,3,4,3,2,1]  
+[1,2,3,4]  
+ghci> nub "Lots of words and stuff"  
+"Lots fwrdanu"  
+
+-- delete 可 By
+ghci> delete 'h' "hey there ghang!"  
+"ey there ghang!"  
+ghci> delete 'h' . delete 'h' $ "hey there ghang!"  
+"ey tere ghang!"  
+ghci> delete 'h' . delete 'h' . delete 'h' $ "hey there ghang!"  
+"ey tere gang!"
+
+-- insert 找到第一个 比待插入元素更大的最小元素插入 可 By
+ghci> insert 4 [3,5,1,2,8,2]  
+[3,4,5,1,2,8,2]  
+ghci> insert 4 [1,3,4,4,1]  
+[1,3,4,4,4,1]  
+
+-- \\ set difference 
+ghci> [1..10] \\ [2,5,9]  
+[1,3,4,6,7,8,10]  
+ghci> "Im a big baby" \\ "big"  
+"Im a  baby"  
+
+-- union 第二个列表中的重复元素被移除 可 By
+ghci> "hey man" `union` "man what's up"  
+"hey manwt'sup"  
+ghci> [1..7] `union` [5..10]  
+[1,2,3,4,5,6,7,8,9,10]  
+
+-- intersect 可 By
+ghci> [1..7] `intersect` [5..10]  
+[5,6,7]  
+
+-- group 可 By
+ghci> group [1,1,1,1,2,2,2,2,3,3,2,2,2,5,6,7]  
+[[1,1,1,1],[2,2,2,2],[3,3],[2,2,2],[5],[6],[7]]  
+
+-- inits / tails give the list of init and tail
+ghci> inits "w00t"  
+["","w","w0","w00","w00t"]  
+ghci> tails "w00t"  
+["w00t","00t","0t","t",""]  
+ghci> let w = "w00t" in zip (inits w) (tails w)  
+[("","w00t"),("w","00t"),("w0","0t"),("w00","t"),("w00t","")]
+
+-- substring / sublist
+ghci> "cat" `isInfixOf` "im a cat burglar"  
+True  
+ghci> "Cat" `isInfixOf` "im a cat burglar"  
+False  
+ghci> "cats" `isInfixOf` "im a cat burglar"  
+False  
+
+ghci> "hey" `isPrefixOf` "hey there!"  
+True  
+ghci> "hey" `isPrefixOf` "oh hey there!"  
+False  
+ghci> "there!" `isSuffixOf` "oh hey there!"  
+True  
+ghci> "there!" `isSuffixOf` "oh hey there"  
+False  
+
+-- partition
+ghci> partition (`elem` ['A'..'Z']) "BOBsidneyMORGANeddy"  
+("BOBMORGAN","sidneyeddy")  
+ghci> partition (>3) [1,3,5,6,3,2,1,0,3,7]  
+([5,6,7],[1,3,3,2,1,0,3])  
+```
+
+### Data.Char
+字符处理 
+``` haskell
+ghci> import Data.Char
+ghci> chr 112
+'p'
+ghci> ord 'c'
+99
+
+
+```
+
+### Data.Map
+``` haskell
+import qualified Data.Map as Map  
+
+```
+
+### Data.Set
+``` haskell
+import qualified Data.Set as Set  
+
+```
