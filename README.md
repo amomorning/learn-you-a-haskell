@@ -234,6 +234,8 @@ ghci> rightTriangles
 ```
 
 ### 输入输出
+
+#### 字符串到代码
 ``` haskell
 -- read 字符串，并指定输入类型
 ghci> read "5" :: Int  
@@ -246,6 +248,13 @@ ghci> read "[1,2,3,4]" :: [Int]
 [1,2,3,4]  
 ghci> read "(3, 'a')" :: (Int, Char)  
 (3, 'a') 
+```
+IO() 类型意味着，要么以 `name <- getLine` 从控制台输入，要么以`putStrLn something`在控制台输出，`do`是将这样的输入输出连接起来的命令
+``` haskell
+main = do  
+    putStrLn "Hello, what's your name?"  
+    name <- getLine  
+    putStrLn $ "Read this carefully, because this is your future: " ++ tellFortune name  
 ```
 
 ### 函数
