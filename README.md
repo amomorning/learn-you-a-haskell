@@ -255,8 +255,52 @@ main = do
     putStrLn "Hello, what's your name?"  
     name <- getLine  
     putStrLn $ "Read this carefully, because this is your future: " ++ tellFortune name  
+
+-- 输入直到 -1
+import Control.Monad
+
+main = do
+    line <- getLine
+    when (line /= "-1") $ do
+        -- do something
+        main
+
+```
+#### 文件读写
+下载的数据要输入到程序 `a.hs` 中：
+``` bash
+cat data.txt | runghc a.hs
+```
+在程序中打开文件：
+``` haskell
+
+-- 使用 openFile
+-- data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode  
+import System.IO  
+  
+main = do  
+    handle <- openFile "girlfriend.txt" ReadMode  
+    contents <- hGetContents handle  
+    putStr contents  
+    hClose handle  
+
+-- 使用 withFile
+import System.IO     
+    
+main = do     
+    withFile "girlfriend.txt" ReadMode (\handle -> do  
+        contents <- hGetContents handle     
+        putStr contents)  
+
+-- 使用 readFile
+import System.IO  
+  
+main = do  
+    contents <- readFile "girlfriend.txt"  
+    putStr contents  
 ```
 
+写入文件有 `writeFile`、`appendFile`
 ### 函数
 在 Haskell 中可为函数指定 Type 和 Typeclass
 而函数定义时，可以检查参数是否符合某种形式，并映射到不同的结果上。
