@@ -1,3 +1,7 @@
+## Learn you a Haskell
+[[Book](http://learnyouahaskell.com/chapters)] 
+[[Library](https://downloads.haskell.org/~ghc/latest/docs/html/libraries/)]
+
 ### 交互式运行环境
 在命令行输入 `ghci`，即可进入交互式运行环境
 #### 引入`*.hs`文件
